@@ -33,7 +33,10 @@
                 "/usr/include/x86_64-linux-gnu",
                 "${workspaceRoot}",
                 "/usr/include/linux",
-                "/usr/include/c++/5/tr1"
+                "/usr/include/c++/5/tr1",
+                "/usr/lib/llvm-3.7/lib/clang/3.7.1/include",
+                "/usr/local/include/opencv2",
+                "/usr/local/include/opencv"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -44,7 +47,11 @@
                     "/usr/local/include",
                     "/usr/include",
                     "/usr/include/x86_64-linux-gnu",
-                    "${workspaceRoot}"
+                    "${workspaceRoot}",
+                    "/usr/include/linux",
+                    "/usr/include/c++/5/tr1",
+                    "/usr/local/include/opencv2",
+                    "/usr/local/include/opencv"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
