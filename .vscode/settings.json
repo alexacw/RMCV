@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "algorithm": "cpp",
-        "random": "cpp"
+        "array": "cpp",
+        "initializer_list": "cpp",
+        "valarray": "cpp"
     }
 }

@@ -26,15 +26,13 @@
         {
             "name": "Linux",
             "includePath": [
-                "/usr/include/c++/5",
-                "/usr/include/x86_64-linux-gnu/c++/5",
+                "/usr/include/x86_64-linux-gnu/c++/5.4.0",
+                "/usr/include/c++/5.4.0",
                 "/usr/local/include",
-                "/usr/include",
+                "/usr/lib/clang/3.8.0/include",
                 "/usr/include/x86_64-linux-gnu",
+                "/usr/include",
                 "${workspaceRoot}",
-                "/usr/include/linux",
-                "/usr/include/c++/5/tr1",
-                "/usr/lib/llvm-3.7/lib/clang/3.7.1/include",
                 "/usr/local/include/opencv2",
                 "/usr/local/include/opencv"
             ],
@@ -42,16 +40,15 @@
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
-                    "/usr/include/c++/5",
-                    "/usr/include/x86_64-linux-gnu/c++/5",
+                    "/usr/include/x86_64-linux-gnu/c++/5.4.0",
+                    "/usr/include/c++/5.4.0",
                     "/usr/local/include",
-                    "/usr/include",
-                    "/usr/include/x86_64-linux-gnu",
-                    "${workspaceRoot}",
-                    "/usr/include/linux",
-                    "/usr/include/c++/5/tr1",
                     "/usr/local/include/opencv2",
-                    "/usr/local/include/opencv"
+                    "/usr/local/include/opencv",
+                    "/usr/lib/clang/3.8.0/include",
+                    "/usr/include/x86_64-linux-gnu",
+                    "/usr/include",
+                    "${workspaceRoot}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
