@@ -1,3 +1,0 @@
-/home/acw/Desktop/CV_Tutorial/build/CMakeFiles/rebuild_cache.dir
-/home/acw/Desktop/CV_Tutorial/build/CMakeFiles/edit_cache.dir
-/home/acw/Desktop/CV_Tutorial/build/CMakeFiles/main.dir

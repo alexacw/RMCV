@@ -6,7 +6,7 @@
 # Note: If you use 2.6 or 2.4, God kills a kitten. Seriously.
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
-project( rune )
+project( RMInternalGpSCV )
 #####
 # Enables link_directories() treat paths relative
 # to the source dir.
