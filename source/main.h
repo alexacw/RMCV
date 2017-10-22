@@ -32,7 +32,7 @@ bool number_segment[10][7] = {
     {1, 1, 1, 1, 0, 1, 1}};
 
 //Gaussian Blur values
-int Gau_blur_size = 8;
+int Gau_blur_size = 20;
 
 int const Gau_blur_max_size = 50;
 
@@ -44,8 +44,8 @@ char *const Gau_blur_size_tackbar = "Gaussian Blur Size (2n+1)";
 int const adpt_ts_BINARY_value = 255;
 
 int adpt_ts_adaptiveMethod = 1;
-int adpt_ts_thresholdType = 1;
-int adpt_ts_blockSize = 1; //here blocksize means half length of diagonal
+int adpt_ts_thresholdType = 0;
+int adpt_ts_blockSize = 12; //here blocksize means half length of diagonal
 int adpt_ts_subConstant = 0;
 
 int const adpt_ts_max_adaptiveMethod = 1;
@@ -64,9 +64,9 @@ char *const adpt_ts_trackbar_subConstant = "Subtraction Constant:";
 char *const mplg_window_name = "Morphological transform values";
 
 //Morphological-kernel
-int mplg_shape = 0;
-int mplg_size_witdth = 1; //these size will be distance from center to edge
-int mplg_size_height = 1;
+int mplg_shape = 2;
+int mplg_size_witdth = 10; //these size will be distance from center to edge
+int mplg_size_height = 10;
 
 int const mplg_max_shape = 2;        // rect, cross, ellipse
 int const mplg_max_size_witdth = 50; //these size will be distance from center to edge
@@ -77,8 +77,11 @@ char *const mplg_trackbar_witdth = "kernel width (= value*2 + 1)";
 char *const mplg_trackbar_height = "kernel height (= value*2 + 1)";
 
 //Morphological-values
-int mplg_opertaion = 0;
+int mplg_opertaion = 3;
+int mplg_iterations = 1;
 
 int const mplg_max_opertaion = 6;
+int const mplg_max_iterations = 10;
 
 char *const mplg_trackbar_opertaion = "0: Erode \n1: Dilate \n2: Open \n3: Close \n4: Gradient \n5: Tophat \n6: Blackhat";
+char *const mplg_trackbar_iterations = "iterations";

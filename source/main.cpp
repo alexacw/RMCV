@@ -29,6 +29,7 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_witdth, mplg_window_name, &mplg_size_witdth, mplg_max_size_witdth);
     createTrackbar(mplg_trackbar_height, mplg_window_name, &mplg_size_height, mplg_max_size_height);
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
+    createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
 
     while (1)
     {
@@ -49,9 +50,9 @@ int main(int argc, char **argv)
         imshow(adpt_ts_window_name, binaryA);
 
         //make segment clear by morpho
-        Mat morphoKernel = getStructuringElement(mplg_shape, Size(mplg_size_witdth, mplg_size_height));
+        Mat morphoKernel = getStructuringElement(mplg_shape, Size(mplg_size_witdth > 0 ? mplg_size_witdth : 1, mplg_size_height > 0 ? mplg_size_height : 1));
 
-        morphologyEx(binaryA, morphoA, mplg_opertaion, morphoKernel);
+        morphologyEx(binaryA, morphoA, mplg_opertaion, morphoKernel, Point(-1, -1), mplg_iterations);
         imshow(mplg_window_name, morphoA);
 
         if (waitKey(1) == 27)
