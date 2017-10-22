@@ -41,17 +41,17 @@ int main(int argc, char **argv)
         cvtColor(frame, grayA, CV_BGR2GRAY);
 
         //Blur
-        GaussianBlur(grayA, gauA, Size(17, 17), 0);
+        GaussianBlur(grayA, gauA, Size(Gau_blur_size * 2 + 1, Gau_blur_size * 2 + 1), 0);
         imshow(Gau_blur_window_name, gauA);
-        
+
         //highlight foreground
         adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
         imshow(adpt_ts_window_name, binaryA);
 
         //make segment clear by morpho
-        Mat morphoKernel = getStructuringElement(MORPH_ELLIPSE, Size(1, 5));
+        Mat morphoKernel = getStructuringElement(mplg_shape, Size(mplg_size_witdth, mplg_size_height));
 
-        morphologyEx(binaryA, morphoA, MORPH_OPEN, morphoKernel);
+        morphologyEx(binaryA, morphoA, mplg_opertaion, morphoKernel);
         imshow(mplg_window_name, morphoA);
 
         if (waitKey(1) == 27)
