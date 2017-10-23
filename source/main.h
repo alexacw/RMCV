@@ -1,14 +1,16 @@
+#define tuningMode
 /*
 Define seven-segment display segment regions:
+      c1        c2
        ------- 
-      |   1   |      
- ---   -------   ---
-|   |           |   |
+      |   1   | w     
+ ---   -------   ---  r1
+|   |     L     |   |
 | 0 |           | 2 |
 |   |           |   |
- ---   -------   ---
-      |   3   |      
- ---   -------   ---  
+ ---   -------   ---  r2
+      |   3   |        
+ ---   -------   ---  r3
 |   |           |   |
 | 4 |           | 5 |
 |   |           |   |
@@ -17,6 +19,8 @@ Define seven-segment display segment regions:
        -------
 """
 */
+
+const float LWratio = 6 / 1.5;
 
 bool number_segment[10][7] = {
     // first index is number, second is the segment it have
@@ -32,11 +36,11 @@ bool number_segment[10][7] = {
     {1, 1, 1, 1, 0, 1, 1}};
 
 //hardcoded camera values
-const int frameWidth= 640;
-const int frameHeight= 480;
-const int frameType= 16;
-const float frameShiftMultiplier = 0.13;
-const float cropPercent = 0.1;
+const int frameWidth = 640;
+const int frameHeight = 480;
+const int frameType = 16;
+const float frameShiftMultiplier = 0.15;
+const float cropPercent = 0.0;
 
 //Gaussian Blur values
 int Gau_blur_size = 5;
@@ -72,7 +76,7 @@ char *const mplg_window_name = "Morphological transform values";
 
 //Morphological-kernel
 int mplg_shape = 2;
-int mplg_size_witdth = 10; //these size will be distance from center to edge
+int mplg_size_witdth = 4; //these size will be distance from center to edge
 int mplg_size_height = 16;
 
 int const mplg_max_shape = 2;        // rect, cross, ellipse

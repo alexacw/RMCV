@@ -6,6 +6,8 @@
         "utility": "cpp",
         "istream": "cpp",
         "tuple": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "limits": "cpp",
+        "iostream": "cpp"
     }
 }

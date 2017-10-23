@@ -11,6 +11,9 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+    // this is to store the result
+    int resultDigit = -1;
+
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
     // Check VideoCapture documentation.
@@ -32,7 +35,7 @@ int main(int argc, char **argv)
 
     warp_mat = getAffineTransform(srcTri, dstTri);
 
-    Rect myROI(frameWidth * (frameShiftMultiplier+cropPercent), frameHeight *  (frameShiftMultiplier+cropPercent), frameWidth * (1.0 - 2 *  (frameShiftMultiplier+cropPercent)), frameHeight * (1.0 - 2 *  (frameShiftMultiplier+cropPercent)));
+    Rect myROI(frameWidth * (frameShiftMultiplier + cropPercent), frameHeight * (frameShiftMultiplier + cropPercent), frameWidth * (1.0 - 2 * (frameShiftMultiplier + cropPercent)), frameHeight * (1.0 - 2 * (frameShiftMultiplier + cropPercent)));
 
     //windows initializations
     //window- Gaussian Blur
@@ -86,26 +89,90 @@ int main(int argc, char **argv)
         imshow(mplg_window_name, morphoA);
 
         //find digit
+        int frameResult = -1;
         vector<vector<Point>> contours;
+        vector<Rect> targetRects;
         Rect boundRect;
         vector<Vec4i> hierarchy;
 
-        findContours(morphoA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+        Mat ContourA;
+        morphoA.copyTo(ContourA);
+        findContours(ContourA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
         Mat drawing = Mat::zeros(morphoA.size(), CV_8UC3);
         for (int i = 0; i < contours.size(); i++)
         {
-            //Scalar color = Scalar(255, 255, 255);
+            //Filter out useless contours
             boundRect = boundingRect(Mat(contours[i]));
             float ratio = (float)boundRect.width / boundRect.height;
-            if ((ratio > 0.4 && ratio < 0.6 && boundRect.area() > 3000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 500))
+            if ((ratio > 0.4 && ratio < 0.6 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
             {
+#ifdef tuningMode
+                //drawing rect and contours
                 rectangle(frame, boundRect, Scalar(rand() % 255, rand() % 255, rand() % 255), 3);
-                putText(frame, to_string(boundRect.area()), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
+                //putText(frame, to_string(boundRect.area()), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
                 drawContours(drawing, contours, i, Scalar(255, 0, 255), 2, 8, hierarchy, 0, Point());
+#endif
+
+                //check segments
+                Mat digitA = morphoA(boundRect);
+                if (ratio > 0.4 && ratio < 0.6)
+                {
+                    // compute the width and height of each of the 7 segments
+                    // see diagram in header
+                    int xWidth = digitA.size().width / (2 + LWratio);
+                    int xLength = digitA.size().width * LWratio / (2 + LWratio);
+                    int yWidth = digitA.size().height / (3 + 2 * LWratio);
+                    int yLength = digitA.size().height * LWratio / (3 + 2 * LWratio);
+                    Rect segmentRect[7];
+                    segmentRect[0] = Rect(0, yWidth, xWidth, yLength);
+                    segmentRect[1] = Rect(xWidth, 0, xLength, yWidth);
+                    segmentRect[2] = Rect(xWidth + xLength, yWidth, xWidth, yLength);
+                    segmentRect[3] = Rect(xWidth, yWidth + yLength, xLength, yWidth);
+                    segmentRect[4] = Rect(0, yWidth * 2 + yLength, xWidth, yLength);
+                    segmentRect[5] = Rect(xWidth + xLength, yWidth * 2 + yLength, xWidth, yLength);
+                    segmentRect[6] = Rect(xWidth, yWidth * 2 + yLength * 2, xLength, yWidth);
+
+                    bool segOn[7];
+                    for (int i = 0; i < 7; i++)
+                    {
+                        //cout << "  " << i << ": " << ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area());
+                        segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > 0.7;
+                        cout << (segOn[i] ? "T" : "F") << "  ";
+                    }
+                    cout << endl;
+
+                    for (int i = 0; i < 7; i++)
+                        rectangle(digitA, segmentRect[i], Scalar(255, 0, 0), 3);
+                    imshow("digitdection", digitA);
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        bool match = true;
+                        for (int j = 0; j < 7; j++)
+                        {
+                            if (number_segment[i][j] != segOn[j])
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+                        if (match == true)
+                        {
+                            if (frameResult <= 1)
+                                frameResult = i;
+                        }
+                    }
+                }
+                else if (frameResult == -1)
+                    frameResult = 1; //result "1" have the lowest pirority
+                putText(frame, to_string(frameResult), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
             }
         }
+#ifdef tuningMode
         imshow("Contours", drawing);
         imshow("Rectangles", frame);
+#endif
+        cout << frameResult << endl;
 
         if (waitKey(1) == 27)
             break; // stop capturing by pressing ESC
