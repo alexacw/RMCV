@@ -1,7 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core.hpp"
 #include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +12,8 @@ int main(int argc, char **argv)
 {
     // this is to store the result
     int resultDigit = -1;
+    int cum_count = 0;
+    int last_seen = -1;
 
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
@@ -20,7 +21,10 @@ int main(int argc, char **argv)
     if (!cap.open(0))
         return 0;
 
-    //transform image matrix
+    frameWidth = cap.get(3);
+    frameHeight = cap.get(4);
+
+    //create transform image matrix for straighten digit
     Point2f srcTri[3], dstTri[3];
 
     Mat warp_mat(2, 3, CV_32FC1);
@@ -38,6 +42,15 @@ int main(int argc, char **argv)
     Rect myROI(frameWidth * (frameShiftMultiplier + cropPercent), frameHeight * (frameShiftMultiplier + cropPercent), frameWidth * (1.0 - 2 * (frameShiftMultiplier + cropPercent)), frameHeight * (1.0 - 2 * (frameShiftMultiplier + cropPercent)));
 
     //windows initializations
+    //Range threshold
+    namedWindow("Color Range", CV_WINDOW_AUTOSIZE);
+    createTrackbar("Low R", "Color Range", &low_r, 255);
+    createTrackbar("High R", "Color Range", &high_r, 255);
+    createTrackbar("Low G", "Color Range", &low_g, 255);
+    createTrackbar("High G", "Color Range", &high_g, 255);
+    createTrackbar("Low B", "Color Range", &low_b, 255);
+    createTrackbar("High B", "Color Range", &high_b, 255);
+
     //window- Gaussian Blur
     namedWindow(Gau_blur_window_name, CV_WINDOW_AUTOSIZE);
     createTrackbar(Gau_blur_size_tackbar, Gau_blur_window_name, &Gau_blur_size, Gau_blur_max_size);
@@ -58,12 +71,12 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
 
-    // TODO: contours filter tune window
-
     //for each frame
     while (1)
     {
         int frameResult = -1;
+        Point PrevCenter = Point(0, 0);
+        int ClosetestDistance = 0;
         //retrieve frame from camera
         cap >> frame;
         if (frame.empty())
@@ -73,8 +86,11 @@ int main(int argc, char **argv)
         warpAffine(frame, frame, warp_mat, frame.size());
         frame = frame(myROI);
 
+        //Apply Color Threshold
+        inRange(frame, Scalar(low_b, low_g, low_r), Scalar(high_b, high_g, high_r), grayA);
+
         //convert to B&W, Blur it, and apply threshold
-        cvtColor(frame, grayA, CV_BGR2GRAY);
+        //cvtColor(redA, grayA, CV_BGR2GRAY);
         GaussianBlur(grayA, gauA, Size(Gau_blur_size * 2 + 1, Gau_blur_size * 2 + 1), 0);
         adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
 
@@ -94,9 +110,13 @@ int main(int argc, char **argv)
         //for each contours
         for (int i = 0; i < contours.size(); i++)
         {
+            int contour_result = -1;
+
             boundRect = boundingRect(Mat(contours[i]));
+            //calculate teh Width/Height ratio of the Rect
             float ratio = (float)boundRect.width / boundRect.height;
-            //Filter out useless contours by ratio, size//TODO: dimention filter, user-friendly parameters customization
+
+            //Filter out useless contours by ratio, size //TODO: tuning interface
             if ((ratio > 0.45 && ratio < 0.7 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
             {
                 //modify rect to check for 1
@@ -148,10 +168,21 @@ int main(int argc, char **argv)
 
                     //all segment's state match this number
                     if (match == true)
-                    {
-                        if (frameResult <= 1)
-                            frameResult = number;
-                    }
+                        contour_result = number;
+                }
+
+                //Contour result pirority (closer to last position, others >7 >1)
+
+                Point thisCenter = (boundRect.tl() - boundRect.br()) * (1.0 / 2.0);
+                int distanceFromLast = norm(PrevCenter - thisCenter);
+                if ((frameResult < 0) ||
+                    (frameResult == 1 && contour_result != 1) ||
+                    (frameResult == 7 && contour_result != 7 && contour_result != 1) ||
+                    (ClosetestDistance > distanceFromLast))
+                {
+                    ClosetestDistance = distanceFromLast;
+                    PrevCenter = thisCenter;
+                    frameResult = contour_result;
                 }
 
                 //show the grabbed area
@@ -161,10 +192,10 @@ int main(int argc, char **argv)
                     rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
                 }
                 imshow("frame", digitA);
-                cout << ratio << "  ";
+                cout << ratio << "  ";frameResult
                 */
             }
-        }
+        } //end contour loop
 
         //for tuning purpose
         imshow(Gau_blur_window_name, gauA);
@@ -177,8 +208,23 @@ int main(int argc, char **argv)
         }
         imshow("Contours", ContourSrc);
 
-        //output result here //TODO: Bluetooth
-        cout << frameResult << endl;
+        //store and update results
+        if (resultDigit == frameResult)
+            cum_count++;
+        else
+        {
+            cout << frameResult << endl;
+            cum_count = 0;
+        }
+        resultDigit = frameResult;
+
+        //confirmed digit, output
+        if (cum_count == min_count_to_confirm && resultDigit != -1 && last_seen != resultDigit)
+        {
+            //TODO: Bluetooth
+            cout << "Confiremed: " << resultDigit << endl;
+            last_seen = resultDigit;
+        }
 
         // stop program by pressing ESC
         if (waitKey(1) == 27)

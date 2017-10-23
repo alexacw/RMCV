@@ -35,12 +35,23 @@ bool number_segment[10][7] = {
     {1, 1, 1, 1, 1, 1, 1},
     {1, 1, 1, 1, 0, 1, 1}};
 
-//hardcoded camera values
-const int frameWidth = 640;
-const int frameHeight = 480;
+//gereral parameters
+const int min_count_to_confirm = 3;
+
+//(hardcoded) camera values
+int frameWidth;
+int frameHeight;
 const int frameType = 16;
 const float frameShiftMultiplier = 0.15;
 const float cropPercent = 0.0;
+
+//Color Range Threshol Vlaues
+int low_r = 180,
+    high_r = 255,
+    low_g = 0,
+    high_g = 255,
+    low_b = 0,
+    high_b = 255;
 
 //Gaussian Blur values
 int Gau_blur_size = 10;
