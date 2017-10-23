@@ -97,59 +97,87 @@ int main(int argc, char **argv)
             boundRect = boundingRect(Mat(contours[i]));
             float ratio = (float)boundRect.width / boundRect.height;
             //Filter out useless contours by ratio, size//TODO: dimention filter, user-friendly parameters customization
-            if ((ratio > 0.4 && ratio < 0.6 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
+            if ((ratio > 0.45 && ratio < 0.7 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
             {
+                //modify rect to check for 1
+                if (ratio < 0.25)
+                {
+                    boundRect.x -= boundRect.height / 2;
+                    boundRect.width += boundRect.height / 2;
+                    if (boundRect.x < 0 || boundRect.x + boundRect.width >= morphoA.size().width)
+                    {
+                        break; // break the for loop if extended rect is out of bound
+                    }
+                }
                 //check segments
                 Mat digitA = morphoA(boundRect);
                 if (ratio > 0.4 && ratio < 0.6)
+
+                    Mat digitA = morphoA(boundRect);
+                // compute the rect of segments
+                int xWidth = digitA.size().width / (2 + LWratio);
+                int xLength = digitA.size().width * LWratio / (2 + LWratio);
+                int yWidth = digitA.size().height / (3 + 2 * LWratio);
+                int yLength = digitA.size().height * LWratio / (3 + 2 * LWratio);
+                Rect segmentRect[7];
+                segmentRect[0] = Rect(0, yWidth, xWidth, yLength);
+                segmentRect[1] = Rect(xWidth, 0, xLength, yWidth);
+                segmentRect[2] = Rect(xWidth + xLength, yWidth, xWidth, yLength);
+                segmentRect[3] = Rect(xWidth, yWidth + yLength, xLength, yWidth);
+                segmentRect[4] = Rect(0, yWidth * 2 + yLength, xWidth, yLength);
+                segmentRect[5] = Rect(xWidth + xLength, yWidth * 2 + yLength, xWidth, yLength);
+                segmentRect[6] = Rect(xWidth, yWidth * 2 + yLength * 2, xLength, yWidth);
+
+                //determine segment is on or off
+                bool segOn[7];
+                for (int i = 0; i < 7; i++)
                 {
-                    // compute the rect of segments
-                    int xWidth = digitA.size().width / (2 + LWratio);
-                    int xLength = digitA.size().width * LWratio / (2 + LWratio);
-                    int yWidth = digitA.size().height / (3 + 2 * LWratio);
-                    int yLength = digitA.size().height * LWratio / (3 + 2 * LWratio);
-                    Rect segmentRect[7];
-                    segmentRect[0] = Rect(0, yWidth, xWidth, yLength);
-                    segmentRect[1] = Rect(xWidth, 0, xLength, yWidth);
-                    segmentRect[2] = Rect(xWidth + xLength, yWidth, xWidth, yLength);
-                    segmentRect[3] = Rect(xWidth, yWidth + yLength, xLength, yWidth);
-                    segmentRect[4] = Rect(0, yWidth * 2 + yLength, xWidth, yLength);
-                    segmentRect[5] = Rect(xWidth + xLength, yWidth * 2 + yLength, xWidth, yLength);
-                    segmentRect[6] = Rect(xWidth, yWidth * 2 + yLength * 2, xLength, yWidth);
+                    segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > 0.5;
+                }
 
-                    //determine segment is on or off
-                    bool segOn[7];
-                    for (int i = 0; i < 7; i++)
-                    {
-                        segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > 0.7;
-                    }
-
-                    //find matching digits
-                    for (int number = 0; number < 10; number++)
-                    {
-                        bool match = true;
-                        for (int segIndex = 0; segIndex < 7; segIndex++)
-                            if (number_segment[number][segIndex] != segOn[segIndex])
-                            {
-                                match = false;
-                                break;
-                            }
-
-                            //all segment's state match this number
-                        if (match == true)
+                //find matching digits
+                for (int number = 0; number < 10; number++)
+                {
+                    bool match = true;
+                    for (int segIndex = 0; segIndex < 7; segIndex++)
+                        if (number_segment[number][segIndex] != segOn[segIndex])
                         {
-                            if (frameResult <= 1)
-                                frameResult = i;
+                            match = false;
+                            break;
                         }
+
+                    //all segment's state match this number
+                    if (match == true)
+                    {
+                        if (frameResult <= 1)
+                            frameResult = number;
                     }
                 }
-                else if (frameResult == -1)
-                    frameResult = 1; //result "1" have the lowest pirority
-                putText(frame, to_string(frameResult), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
+
+                //show the grabbed area
+                /*
+                for (int i = 0; i < 7; i++)
+                {
+                    rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
+                }
+                imshow("frame", digitA);
+                cout << ratio << "  ";
+                */
             }
         }
 
-        //output result here
+        //for tuning purpose
+        imshow(Gau_blur_window_name, gauA);
+        imshow(adpt_ts_window_name, binaryA);
+        imshow(mplg_window_name, morphoA);
+
+        for (int i = 0; i < contours.size(); i++)
+        {
+            drawContours(ContourSrc, contours, i, Scalar(255, 0, 0));
+        }
+        imshow("Contours", ContourSrc);
+
+        //output result here //TODO: Bluetooth
         cout << frameResult << endl;
 
         // stop program by pressing ESC

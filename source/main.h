@@ -20,7 +20,7 @@ Define seven-segment display segment regions:
 """
 */
 
-const float LWratio = 6 / 1.5;
+const float LWratio = 5.5 / 1.5;
 
 bool number_segment[10][7] = {
     // first index is number, second is the segment it have
@@ -43,7 +43,7 @@ const float frameShiftMultiplier = 0.15;
 const float cropPercent = 0.0;
 
 //Gaussian Blur values
-int Gau_blur_size = 5;
+int Gau_blur_size = 10;
 
 int const Gau_blur_max_size = 50;
 
@@ -76,7 +76,7 @@ char *const mplg_window_name = "Morphological transform values";
 
 //Morphological-kernel
 int mplg_shape = 2;
-int mplg_size_witdth = 4; //these size will be distance from center to edge
+int mplg_size_witdth = 9; //these size will be distance from center to edge
 int mplg_size_height = 16;
 
 int const mplg_max_shape = 2;        // rect, cross, ellipse
