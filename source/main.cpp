@@ -17,6 +17,14 @@ int main(int argc, char **argv)
     if (!cap.open(0))
         return 0;
 
+    //transform image matrix
+    Point2f srcTri[3];
+    Point2f dstTri[3];
+
+    Mat rot_mat(2, 3, CV_32FC1);
+    Mat warp_mat(2, 3, CV_32FC1);
+    Mat src, warp_dst, warp_rotate_dst;
+
     //windows initializations
     //window- Gaussian Blur
     namedWindow(Gau_blur_window_name, CV_WINDOW_AUTOSIZE);
@@ -65,7 +73,7 @@ int main(int argc, char **argv)
         imshow(mplg_window_name, morphoA);
 
         //find digit
-        vector<vector<Point> > contours;
+        vector<vector<Point>> contours;
         vector<Vec4i> hierarchy;
 
         findContours(morphoA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
