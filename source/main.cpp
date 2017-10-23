@@ -56,69 +56,54 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_height, mplg_window_name, &mplg_size_height, mplg_max_size_height);
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
-
-    //window-contours
-    namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
 
+    // TODO: contours filter tune window
+
+    //for each frame
     while (1)
     {
+        int frameResult = -1;
+        //retrieve frame from camera
         cap >> frame;
         if (frame.empty())
             break; // end of video stream
 
+        //transform frame to make digit straight
         warpAffine(frame, frame, warp_mat, frame.size());
         frame = frame(myROI);
 
-        //convert ot B&W
+        //convert to B&W, Blur it, and apply threshold
         cvtColor(frame, grayA, CV_BGR2GRAY);
-
-        //Blur
         GaussianBlur(grayA, gauA, Size(Gau_blur_size * 2 + 1, Gau_blur_size * 2 + 1), 0);
-        imshow(Gau_blur_window_name, gauA);
-
-        //highlight foreground
         adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
-        imshow(adpt_ts_window_name, binaryA);
 
-        //make segment clear by morpho
+        //joint segments together by morpho
         Mat morphoKernel = getStructuringElement(mplg_shape, Size(mplg_size_witdth > 0 ? mplg_size_witdth : 1, mplg_size_height > 0 ? mplg_size_height : 1));
-
         morphologyEx(binaryA, morphoA, mplg_opertaion, morphoKernel, Point(-1, -1), mplg_iterations);
-        imshow(mplg_window_name, morphoA);
 
-        //find digit
-        int frameResult = -1;
+        //find contours
         vector<vector<Point>> contours;
-        vector<Rect> targetRects;
         Rect boundRect;
         vector<Vec4i> hierarchy;
+        Mat ContourSrc;
+        morphoA.copyTo(ContourSrc);
 
-        Mat ContourA;
-        morphoA.copyTo(ContourA);
-        findContours(ContourA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-        Mat drawing = Mat::zeros(morphoA.size(), CV_8UC3);
+        findContours(ContourSrc, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+        //for each contours
         for (int i = 0; i < contours.size(); i++)
         {
-            //Filter out useless contours
             boundRect = boundingRect(Mat(contours[i]));
             float ratio = (float)boundRect.width / boundRect.height;
+            //Filter out useless contours by ratio, size//TODO: dimention filter, user-friendly parameters customization
             if ((ratio > 0.4 && ratio < 0.6 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
             {
-#ifdef tuningMode
-                //drawing rect and contours
-                rectangle(frame, boundRect, Scalar(rand() % 255, rand() % 255, rand() % 255), 3);
-                //putText(frame, to_string(boundRect.area()), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
-                drawContours(drawing, contours, i, Scalar(255, 0, 255), 2, 8, hierarchy, 0, Point());
-#endif
-
                 //check segments
                 Mat digitA = morphoA(boundRect);
                 if (ratio > 0.4 && ratio < 0.6)
                 {
-                    // compute the width and height of each of the 7 segments
-                    // see diagram in header
+                    // compute the rect of segments
                     int xWidth = digitA.size().width / (2 + LWratio);
                     int xLength = digitA.size().width * LWratio / (2 + LWratio);
                     int yWidth = digitA.size().height / (3 + 2 * LWratio);
@@ -132,30 +117,25 @@ int main(int argc, char **argv)
                     segmentRect[5] = Rect(xWidth + xLength, yWidth * 2 + yLength, xWidth, yLength);
                     segmentRect[6] = Rect(xWidth, yWidth * 2 + yLength * 2, xLength, yWidth);
 
+                    //determine segment is on or off
                     bool segOn[7];
                     for (int i = 0; i < 7; i++)
                     {
-                        //cout << "  " << i << ": " << ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area());
                         segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > 0.7;
-                        cout << (segOn[i] ? "T" : "F") << "  ";
                     }
-                    cout << endl;
 
-                    for (int i = 0; i < 7; i++)
-                        rectangle(digitA, segmentRect[i], Scalar(255, 0, 0), 3);
-                    imshow("digitdection", digitA);
-
-                    for (int i = 0; i < 10; i++)
+                    //find matching digits
+                    for (int number = 0; number < 10; number++)
                     {
                         bool match = true;
-                        for (int j = 0; j < 7; j++)
-                        {
-                            if (number_segment[i][j] != segOn[j])
+                        for (int segIndex = 0; segIndex < 7; segIndex++)
+                            if (number_segment[number][segIndex] != segOn[segIndex])
                             {
                                 match = false;
                                 break;
                             }
-                        }
+
+                            //all segment's state match this number
                         if (match == true)
                         {
                             if (frameResult <= 1)
@@ -168,16 +148,15 @@ int main(int argc, char **argv)
                 putText(frame, to_string(frameResult), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
             }
         }
-#ifdef tuningMode
-        imshow("Contours", drawing);
-        imshow("Rectangles", frame);
-#endif
+
+        //output result here
         cout << frameResult << endl;
 
+        // stop program by pressing ESC
         if (waitKey(1) == 27)
-            break; // stop capturing by pressing ESC
+            break;
     }
-    // the camera will be closed automatically upon exit
-    // cap.close();
+
+    // the camera will be closed automatically upon exit no cap.close needed
     return 0;
 }
