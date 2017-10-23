@@ -31,8 +31,15 @@ bool number_segment[10][7] = {
     {1, 1, 1, 1, 1, 1, 1},
     {1, 1, 1, 1, 0, 1, 1}};
 
+//hardcoded camera values
+const int frameWidth= 640;
+const int frameHeight= 480;
+const int frameType= 16;
+const float frameShiftMultiplier = 0.13;
+const float cropPercent = 0.1;
+
 //Gaussian Blur values
-int Gau_blur_size = 20;
+int Gau_blur_size = 5;
 
 int const Gau_blur_max_size = 50;
 
@@ -45,7 +52,7 @@ int const adpt_ts_BINARY_value = 255;
 
 int adpt_ts_adaptiveMethod = 1;
 int adpt_ts_thresholdType = 0;
-int adpt_ts_blockSize = 6; //here blocksize means half length of diagonal
+int adpt_ts_blockSize = 4; //here blocksize means half length of diagonal
 int adpt_ts_subConstant = 0;
 
 int const adpt_ts_max_adaptiveMethod = 1;
@@ -65,7 +72,7 @@ char *const mplg_window_name = "Morphological transform values";
 
 //Morphological-kernel
 int mplg_shape = 2;
-int mplg_size_witdth = 4; //these size will be distance from center to edge
+int mplg_size_witdth = 10; //these size will be distance from center to edge
 int mplg_size_height = 16;
 
 int const mplg_max_shape = 2;        // rect, cross, ellipse

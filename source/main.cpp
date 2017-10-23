@@ -18,12 +18,21 @@ int main(int argc, char **argv)
         return 0;
 
     //transform image matrix
-    Point2f srcTri[3];
-    Point2f dstTri[3];
+    Point2f srcTri[3], dstTri[3];
 
-    Mat rot_mat(2, 3, CV_32FC1);
     Mat warp_mat(2, 3, CV_32FC1);
-    Mat src, warp_dst, warp_rotate_dst;
+
+    srcTri[0] = Point2f(0, 0);
+    srcTri[1] = Point2f(frameWidth - 1, 0);
+    srcTri[2] = Point2f(0, frameWidth - 1);
+
+    dstTri[0] = Point2f(0, 0);
+    dstTri[1] = Point2f(frameWidth - 1, 0);
+    dstTri[2] = Point2f(frameWidth * frameShiftMultiplier, frameWidth - 1);
+
+    warp_mat = getAffineTransform(srcTri, dstTri);
+
+    Rect myROI(frameWidth * (frameShiftMultiplier+cropPercent), frameHeight *  (frameShiftMultiplier+cropPercent), frameWidth * (1.0 - 2 *  (frameShiftMultiplier+cropPercent)), frameHeight * (1.0 - 2 *  (frameShiftMultiplier+cropPercent)));
 
     //windows initializations
     //window- Gaussian Blur
@@ -48,12 +57,16 @@ int main(int argc, char **argv)
     //window-contours
     namedWindow("Contours", CV_WINDOW_AUTOSIZE);
 
+    Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
+
     while (1)
     {
-        Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
         cap >> frame;
         if (frame.empty())
             break; // end of video stream
+
+        warpAffine(frame, frame, warp_mat, frame.size());
+        frame = frame(myROI);
 
         //convert ot B&W
         cvtColor(frame, grayA, CV_BGR2GRAY);
@@ -74,16 +87,25 @@ int main(int argc, char **argv)
 
         //find digit
         vector<vector<Point>> contours;
+        Rect boundRect;
         vector<Vec4i> hierarchy;
 
         findContours(morphoA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
         Mat drawing = Mat::zeros(morphoA.size(), CV_8UC3);
         for (int i = 0; i < contours.size(); i++)
         {
-            Scalar color = Scalar(rand() % 256, rand() % 256, rand() % 256);
-            drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
+            //Scalar color = Scalar(255, 255, 255);
+            boundRect = boundingRect(Mat(contours[i]));
+            float ratio = (float)boundRect.width / boundRect.height;
+            if ((ratio > 0.4 && ratio < 0.6 && boundRect.area() > 3000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 500))
+            {
+                rectangle(frame, boundRect, Scalar(rand() % 255, rand() % 255, rand() % 255), 3);
+                putText(frame, to_string(boundRect.area()), cvPoint(boundRect.x, boundRect.y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250));
+                drawContours(drawing, contours, i, Scalar(255, 0, 255), 2, 8, hierarchy, 0, Point());
+            }
         }
         imshow("Contours", drawing);
+        imshow("Rectangles", frame);
 
         if (waitKey(1) == 27)
             break; // stop capturing by pressing ESC

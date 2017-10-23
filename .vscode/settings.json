@@ -3,6 +3,9 @@
         "array": "cpp",
         "initializer_list": "cpp",
         "valarray": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "istream": "cpp",
+        "tuple": "cpp",
+        "ostream": "cpp"
     }
 }
