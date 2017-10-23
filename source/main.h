@@ -45,7 +45,7 @@ int const adpt_ts_BINARY_value = 255;
 
 int adpt_ts_adaptiveMethod = 1;
 int adpt_ts_thresholdType = 0;
-int adpt_ts_blockSize = 12; //here blocksize means half length of diagonal
+int adpt_ts_blockSize = 6; //here blocksize means half length of diagonal
 int adpt_ts_subConstant = 0;
 
 int const adpt_ts_max_adaptiveMethod = 1;
@@ -65,8 +65,8 @@ char *const mplg_window_name = "Morphological transform values";
 
 //Morphological-kernel
 int mplg_shape = 2;
-int mplg_size_witdth = 10; //these size will be distance from center to edge
-int mplg_size_height = 10;
+int mplg_size_witdth = 4; //these size will be distance from center to edge
+int mplg_size_height = 16;
 
 int const mplg_max_shape = 2;        // rect, cross, ellipse
 int const mplg_max_size_witdth = 50; //these size will be distance from center to edge

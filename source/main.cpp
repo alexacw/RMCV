@@ -1,7 +1,13 @@
 #include <opencv2/opencv.hpp>
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core.hpp"
 #include "main.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace cv;
+using namespace std;
 
 int main(int argc, char **argv)
 {
@@ -31,6 +37,9 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
 
+    //window-contours
+    namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+
     while (1)
     {
         Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
@@ -54,6 +63,19 @@ int main(int argc, char **argv)
 
         morphologyEx(binaryA, morphoA, mplg_opertaion, morphoKernel, Point(-1, -1), mplg_iterations);
         imshow(mplg_window_name, morphoA);
+
+        //find digit
+        vector<vector<Point> > contours;
+        vector<Vec4i> hierarchy;
+
+        findContours(morphoA, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+        Mat drawing = Mat::zeros(morphoA.size(), CV_8UC3);
+        for (int i = 0; i < contours.size(); i++)
+        {
+            Scalar color = Scalar(rand() % 256, rand() % 256, rand() % 256);
+            drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
+        }
+        imshow("Contours", drawing);
 
         if (waitKey(1) == 27)
             break; // stop capturing by pressing ESC
