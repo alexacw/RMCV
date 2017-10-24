@@ -47,7 +47,7 @@ const float frameShiftMultiplier = 0.15;
 const float cropPercent = 0.0;
 
 //Color Range Threshol Vlaues
-int low_r = 190,
+int low_r = 150,
     high_r = 255,
     low_g = 0,
     high_g = 255,
