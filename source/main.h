@@ -47,7 +47,7 @@ const float frameShiftMultiplier = 0.15;
 const float cropPercent = 0.0;
 
 //Color Range Threshol Vlaues
-int low_r = 180,
+int low_r = 190,
     high_r = 255,
     low_g = 0,
     high_g = 255,
@@ -62,6 +62,9 @@ int const Gau_blur_max_size = 50;
 char *const Gau_blur_window_name = "Gaussian Blur";
 
 char *const Gau_blur_size_tackbar = "Gaussian Blur Size (2n+1)";
+
+//absolute threshold Value
+int abs_threshold_min = 100;
 
 //adaptive threshold values
 int const adpt_ts_BINARY_value = 255;

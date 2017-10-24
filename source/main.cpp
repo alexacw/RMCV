@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
     // Check VideoCapture documentation.
-    if (!cap.open(0))
+    if (!cap.open(1))
         return 0;
 
     frameWidth = cap.get(3);
@@ -61,6 +61,8 @@ int main(int argc, char **argv)
     createTrackbar(adpt_ts_trackbar_thresholdType, adpt_ts_window_name, &adpt_ts_thresholdType, adpt_ts_max_thresholdType);
     createTrackbar(adpt_ts_trackbar_blockSize, adpt_ts_window_name, &adpt_ts_blockSize, adpt_ts_max_blockSize);
     createTrackbar(adpt_ts_trackbar_subConstant, adpt_ts_window_name, &adpt_ts_subConstant, adpt_ts_max_subConstant);
+    //alternative: absolute threshold
+    createTrackbar("ABS Thresold", adpt_ts_window_name, &abs_threshold_min, 255);
 
     //window-morphologytuning
     namedWindow(mplg_window_name, CV_WINDOW_AUTOSIZE);
@@ -94,7 +96,10 @@ int main(int argc, char **argv)
         //convert to B&W, Blur it, and apply threshold
         //cvtColor(redA, grayA, CV_BGR2GRAY);
         GaussianBlur(grayA, gauA, Size(Gau_blur_size * 2 + 1, Gau_blur_size * 2 + 1), 0);
-        adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
+
+        //Apply abs threshold instead??????????????????????????????
+        threshold( gauA, binaryA, abs_threshold_min, 255,0 );
+        //adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
 
         //joint segments together by morpho
         Mat morphoKernel = getStructuringElement(mplg_shape, Size(mplg_size_witdth > 0 ? mplg_size_witdth : 1, mplg_size_height > 0 ? mplg_size_height : 1));
@@ -119,7 +124,7 @@ int main(int argc, char **argv)
             float ratio = (float)boundRect.width / boundRect.height;
 
             //Filter out useless contours by ratio, size //TODO: tuning interface
-            if ((ratio > 0.45 && ratio < 0.7 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
+            if ((ratio > 0.4 && ratio < 0.7 && boundRect.area() > 2000) || (ratio > 0.09 && ratio < 0.25 && boundRect.area() > 400))
             {
                 //modify rect to check for 1
                 if (ratio < 0.25)
@@ -187,18 +192,19 @@ int main(int argc, char **argv)
                 }
 
 #ifdef tuningMode
-// for (int i = 0; i < 7; i++)
-// {
-//     rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
-// }
-// imshow("frame", digitA);
-// cout << ratio << "  ";frameResult
+for (int i = 0; i < 7; i++)
+{
+    rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
+}
+imshow("frame", digitA);
+//cout << ratio << "  ";frameResult;
 #endif
             }
         } //end contour loop
 
 #ifdef tuningMode
         //for tuning purpose
+        imshow("Color Range", grayA);
         imshow(Gau_blur_window_name, gauA);
         imshow(adpt_ts_window_name, binaryA);
         imshow(mplg_window_name, morphoA);
