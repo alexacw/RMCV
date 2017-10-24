@@ -1,4 +1,4 @@
-#define tuningMode
+//#define tuningMode
 /*
 Define seven-segment display segment regions:
       c1        c2
@@ -37,6 +37,7 @@ bool number_segment[10][7] = {
 
 //gereral parameters
 const int min_count_to_confirm = 3;
+const float min_segment_match_percent = 0.4;
 
 //(hardcoded) camera values
 int frameWidth;

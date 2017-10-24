@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     warp_mat = getAffineTransform(srcTri, dstTri);
 
     Rect myROI(frameWidth * (frameShiftMultiplier + cropPercent), frameHeight * (frameShiftMultiplier + cropPercent), frameWidth * (1.0 - 2 * (frameShiftMultiplier + cropPercent)), frameHeight * (1.0 - 2 * (frameShiftMultiplier + cropPercent)));
-
+#ifdef tuningMode
     //windows initializations
     //Range threshold
     namedWindow("Color Range", CV_WINDOW_AUTOSIZE);
@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_height, mplg_window_name, &mplg_size_height, mplg_max_size_height);
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
+#endif
+
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
 
     //for each frame
@@ -129,11 +131,10 @@ int main(int argc, char **argv)
                         break; // break the for loop if extended rect is out of bound
                     }
                 }
-                //check segments
-                Mat digitA = morphoA(boundRect);
-                if (ratio > 0.4 && ratio < 0.6)
 
-                    Mat digitA = morphoA(boundRect);
+                //check segments
+
+                Mat digitA = morphoA(boundRect);
                 // compute the rect of segments
                 int xWidth = digitA.size().width / (2 + LWratio);
                 int xLength = digitA.size().width * LWratio / (2 + LWratio);
@@ -152,7 +153,7 @@ int main(int argc, char **argv)
                 bool segOn[7];
                 for (int i = 0; i < 7; i++)
                 {
-                    segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > 0.5;
+                    segOn[i] = ((float)countNonZero(digitA(segmentRect[i])) / segmentRect[i].area()) > min_segment_match_percent;
                 }
 
                 //find matching digits
@@ -185,18 +186,18 @@ int main(int argc, char **argv)
                     frameResult = contour_result;
                 }
 
-                //show the grabbed area
-                /*
-                for (int i = 0; i < 7; i++)
-                {
-                    rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
-                }
-                imshow("frame", digitA);
-                cout << ratio << "  ";frameResult
-                */
+#ifdef tuningMode
+// for (int i = 0; i < 7; i++)
+// {
+//     rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
+// }
+// imshow("frame", digitA);
+// cout << ratio << "  ";frameResult
+#endif
             }
         } //end contour loop
 
+#ifdef tuningMode
         //for tuning purpose
         imshow(Gau_blur_window_name, gauA);
         imshow(adpt_ts_window_name, binaryA);
@@ -207,13 +208,13 @@ int main(int argc, char **argv)
             drawContours(ContourSrc, contours, i, Scalar(255, 0, 0));
         }
         imshow("Contours", ContourSrc);
-
+#endif
         //store and update results
         if (resultDigit == frameResult)
             cum_count++;
         else
         {
-            cout << frameResult << endl;
+            cout << frameResult<< endl;
             cum_count = 0;
         }
         resultDigit = frameResult;
