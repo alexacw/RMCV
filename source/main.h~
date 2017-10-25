@@ -1,4 +1,4 @@
-//#define tuningMode
+#define tuningMode
 /*
 Define seven-segment display segment regions:
       c1        c2
