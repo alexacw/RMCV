@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
     // Check VideoCapture documentation.
-    if (!cap.open(1))
+    if (!cap.open(0))
         return 0;
 
     frameWidth = cap.get(3);
@@ -72,7 +72,12 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
 #endif
-
+do
+{
+cap >> frame;
+}
+while(frame.empty());
+    cout << "start successful"<<endl;
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
 
     //for each frame

@@ -74,7 +74,12 @@ int main(int argc, char **argv)
 #endif
 
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
-
+do
+{
+cap >> frame;
+}
+while(frame.empty());
+    cout << "start successful"<<endl;
     //for each frame
     while (1)
     {
