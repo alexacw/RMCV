@@ -4,12 +4,38 @@
 #include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "client.h"
 
 using namespace cv;
 using namespace std;
 
-int main(int argc, char **argv)
+Client client;
+
+void exit_handler(int a)
 {
+    client.~Client();
+    exit(1);
+}
+
+
+int main(int argc, char *argv[])
+{
+    signal(SIGINT, exit_handler); // exit_handler(int) will be called when ctrl+c is pressed, because we have to make sure destructor of Client will always run when exiting, otherwise next socket connection trial may fail
+    if (argc != 2)
+    {
+        cerr << "Please enter ip address.\n";
+        exit(1);
+    }
+    if (client.config(argv[1], 4331) == false) // our server listens port 4331
+    {
+        cerr << "Invalid ip.\n";
+        exit(1);
+    }
+    while (!client.c())
+        sleep(1); // try to connect until success
+    cout << "successfully connect\n";
+    int answer;
+
     // this is to store the result
     int resultDigit = -1;
     int cum_count = 0;
@@ -235,6 +261,7 @@ imshow("frame", digitA);
         {
             //TODO: Bluetooth
             cout << "Confiremed: " << resultDigit << endl;
+            while (client.sendAns(resultDigit)){}
             last_seen = resultDigit;
         }
 
