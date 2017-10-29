@@ -18,7 +18,6 @@ void exit_handler(int a)
     exit(1);
 }
 
-
 int main(int argc, char *argv[])
 {
     signal(SIGINT, exit_handler); // exit_handler(int) will be called when ctrl+c is pressed, because we have to make sure destructor of Client will always run when exiting, otherwise next socket connection trial may fail
@@ -102,12 +101,11 @@ int main(int argc, char *argv[])
 #endif
 
     Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
-do
-{
-cap >> frame;
-}
-while(frame.empty());
-    cout << "start successful"<<endl;
+    do
+    {
+        cap >> frame;
+    } while (frame.empty());
+    cout << "start successful" << endl;
     //for each frame
     while (1)
     {
@@ -131,7 +129,7 @@ while(frame.empty());
         GaussianBlur(grayA, gauA, Size(Gau_blur_size * 2 + 1, Gau_blur_size * 2 + 1), 0);
 
         //Apply abs threshold instead??????????????????????????????
-        threshold( gauA, binaryA, abs_threshold_min, 255,0 );
+        threshold(gauA, binaryA, abs_threshold_min, 255, 0);
         //adaptiveThreshold(gauA, binaryA, adpt_ts_BINARY_value, adpt_ts_adaptiveMethod, adpt_ts_thresholdType, ((adpt_ts_blockSize * 2 + 1) > 1) ? (adpt_ts_blockSize * 2 + 1) : 3, adpt_ts_subConstant);
 
         //joint segments together by morpho
@@ -187,6 +185,15 @@ while(frame.empty());
                 segmentRect[5] = Rect(xWidth + xLength, yWidth * 2 + yLength, xWidth, yLength);
                 segmentRect[6] = Rect(xWidth, yWidth * 2 + yLength * 2, xLength, yWidth);
 
+                Rect notSegment[2];
+                notSegment[0] = Rect(xWidth, yWidth, xLength, yLength);
+                notSegment[1] = Rect(xWidth, 2 * yWidth + yLength, xLength, yLength);
+
+                if (((float)countNonZero(digitA(notSegment[0])) / notSegment[0].area()) > max_notSegment_match_percent ||
+                    ((float)countNonZero(digitA(notSegment[1])) / notSegment[1].area()) > max_notSegment_match_percent)
+                    //empty spaces out of the segments not found
+                    continue;
+
                 //determine segment is on or off
                 bool segOn[7];
                 for (int i = 0; i < 7; i++)
@@ -195,6 +202,7 @@ while(frame.empty());
                 }
 
                 //find matching digits
+
                 for (int number = 0; number < 10; number++)
                 {
                     bool match = true;
@@ -217,7 +225,7 @@ while(frame.empty());
                 if ((frameResult < 0) ||
                     (frameResult == 1 && contour_result != 1) ||
                     (frameResult == 7 && contour_result != 7 && contour_result != 1) ||
-		(contour_result != 7 && contour_result != 7 && contour_result != 1) ||
+                    (contour_result != 7 && contour_result != 7 && contour_result != 1) ||
                     (ClosetestDistance > distanceFromLast))
                 {
                     ClosetestDistance = distanceFromLast;
@@ -226,11 +234,11 @@ while(frame.empty());
                 }
 
 #ifdef tuningMode
-for (int i = 0; i < 7; i++)
-{
-    rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
-}
-imshow("frame", digitA);
+                for (int i = 0; i < 7; i++)
+                {
+                    rectangle(digitA, segmentRect[i], Scalar(255, 0, 0));
+                }
+                imshow("frame", digitA);
 //cout << ratio << "  ";frameResult;
 #endif
             }
@@ -254,22 +262,24 @@ imshow("frame", digitA);
             cum_count++;
         else
         {
-            cout << frameResult<< endl;
+            cout << frameResult << endl;
             cum_count = 0;
         }
         resultDigit = frameResult;
 
         //confirmed digit, output
-        if (cum_count == min_count_to_confirm && resultDigit != -1 )
+        if (cum_count == min_count_to_confirm && resultDigit != -1)
         {
-if (last_seen != resultDigit || difftime(time(0), lastSent) > 1.0)
-{
-            cout << "Confiremed: " << resultDigit << endl;
-            while (!client.sendAns(resultDigit)){}
-cout << "sent" <<endl;
-            last_seen = resultDigit;
-lastSent = time(0);
-}
+            if (last_seen != resultDigit || difftime(time(0), lastSent) > 1.0)
+            {
+                cout << "Confiremed: " << resultDigit << endl;
+                while (!client.sendAns(resultDigit))
+                {
+                }
+                cout << "sent" << endl;
+                last_seen = resultDigit;
+                lastSent = time(0);
+            }
         }
 
         // stop program by pressing ESC

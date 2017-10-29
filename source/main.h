@@ -38,6 +38,7 @@ bool number_segment[10][7] = {
 //gereral parameters
 const int min_count_to_confirm = 1;
 const float min_segment_match_percent = 0.4;
+const float max_notSegment_match_percent = 0.3;
 
 //(hardcoded) camera values
 int frameWidth;
