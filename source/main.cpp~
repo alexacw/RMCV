@@ -4,16 +4,44 @@
 #include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "client.h"
+#include <time.h>
 
 using namespace cv;
 using namespace std;
 
-int main(int argc, char **argv)
+Client client;
+
+void exit_handler(int a)
 {
+    client.~Client();
+    exit(1);
+}
+
+
+int main(int argc, char *argv[])
+{
+    signal(SIGINT, exit_handler); // exit_handler(int) will be called when ctrl+c is pressed, because we have to make sure destructor of Client will always run when exiting, otherwise next socket connection trial may fail
+    if (argc != 2)
+    {
+        cerr << "Please enter ip address.\n";
+        exit(1);
+    }
+    if (client.config(argv[1], 4331) == false) // our server listens port 4331
+    {
+        cerr << "Invalid ip.\n";
+        exit(1);
+    }
+    while (!client.c())
+        sleep(1); // try to connect until success
+    cout << "successfully connect\n";
+    int answer;
+
     // this is to store the result
     int resultDigit = -1;
     int cum_count = 0;
     int last_seen = -1;
+    time_t lastSent = time(0);
 
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
@@ -72,14 +100,14 @@ int main(int argc, char **argv)
     createTrackbar(mplg_trackbar_opertaion, mplg_window_name, &mplg_opertaion, mplg_max_opertaion);
     createTrackbar(mplg_trackbar_iterations, mplg_window_name, &mplg_iterations, mplg_max_iterations);
 #endif
+
+    Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
 do
 {
 cap >> frame;
 }
 while(frame.empty());
     cout << "start successful"<<endl;
-    Mat frame, grayA, binaryA, gauA, morphoA, cannyA;
-
     //for each frame
     while (1)
     {
@@ -231,11 +259,16 @@ imshow("frame", digitA);
         resultDigit = frameResult;
 
         //confirmed digit, output
-        if (cum_count == min_count_to_confirm && resultDigit != -1 && last_seen != resultDigit)
+        if (cum_count == min_count_to_confirm && resultDigit != -1 )
         {
-            //TODO: Bluetooth
+if (last_seen != resultDigit || difftime(time(0), lastSent) > 1.0)
+{
             cout << "Confiremed: " << resultDigit << endl;
+            while (!client.sendAns(resultDigit)){}
+cout << "sent" <<endl;
             last_seen = resultDigit;
+lastSent = time(0);
+}
         }
 
         // stop program by pressing ESC

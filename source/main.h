@@ -1,4 +1,4 @@
-//#define tuningMode
+#define tuningMode
 /*
 Define seven-segment display segment regions:
       c1        c2
@@ -36,7 +36,7 @@ bool number_segment[10][7] = {
     {1, 1, 1, 1, 0, 1, 1}};
 
 //gereral parameters
-const int min_count_to_confirm = 3;
+const int min_count_to_confirm = 1;
 const float min_segment_match_percent = 0.4;
 
 //(hardcoded) camera values
@@ -47,7 +47,7 @@ const float frameShiftMultiplier = 0.15;
 const float cropPercent = 0.0;
 
 //Color Range Threshol Vlaues
-int low_r = 150,
+int low_r = 100,
     high_r = 255,
     low_g = 0,
     high_g = 255,

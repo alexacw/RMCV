@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "client.h"
+#include <time.h>
 
 using namespace cv;
 using namespace std;
@@ -40,6 +41,7 @@ int main(int argc, char *argv[])
     int resultDigit = -1;
     int cum_count = 0;
     int last_seen = -1;
+    time_t lastSent = time(0);
 
     VideoCapture cap;
     // open the default camera, use something different from 0 otherwise;
@@ -215,6 +217,7 @@ while(frame.empty());
                 if ((frameResult < 0) ||
                     (frameResult == 1 && contour_result != 1) ||
                     (frameResult == 7 && contour_result != 7 && contour_result != 1) ||
+		(contour_result != 7 && contour_result != 7 && contour_result != 1) ||
                     (ClosetestDistance > distanceFromLast))
                 {
                     ClosetestDistance = distanceFromLast;
@@ -257,12 +260,16 @@ imshow("frame", digitA);
         resultDigit = frameResult;
 
         //confirmed digit, output
-        if (cum_count == min_count_to_confirm && resultDigit != -1 && last_seen != resultDigit)
+        if (cum_count == min_count_to_confirm && resultDigit != -1 )
         {
-            //TODO: Bluetooth
+if (last_seen != resultDigit || difftime(time(0), lastSent) > 1.0)
+{
             cout << "Confiremed: " << resultDigit << endl;
-            while (client.sendAns(resultDigit)){}
+            while (!client.sendAns(resultDigit)){}
+cout << "sent" <<endl;
             last_seen = resultDigit;
+lastSent = time(0);
+}
         }
 
         // stop program by pressing ESC
